@@ -303,7 +303,6 @@ SETTINGS
 | Create instance flow | <img width="651" height="716" alt="Screenshot 2026-06-21 202328" src="https://github.com/user-attachments/assets/98be38ea-f379-4001-a523-a73e109766f6" />|
 | Instance list / details | <img width="572" height="621" alt="Screenshot 2026-06-21 202053" src="https://github.com/user-attachments/assets/207a2e8a-4ce5-4a11-a065-0b5b2212c13d" />|
 
-> _Tip: terminal recordings (e.g. asciinema) work well for menu-driven tools._
 
 ---
 
