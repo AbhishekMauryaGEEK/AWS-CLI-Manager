@@ -190,7 +190,7 @@ existing code.
 Clone the repository:
 
 ```bash
-git clone <repository-url>
+[git clone <repository-url>](https://github.com/AbhishekMauryaGEEK/AWS-CLI-Manager)
 cd AWS-CLI-Manager
 ```
 
