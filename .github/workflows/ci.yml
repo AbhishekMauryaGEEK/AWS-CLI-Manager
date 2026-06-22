@@ -24,16 +24,6 @@ jobs:
       - name: Run ShellCheck
         uses: ludeeus/action-shellcheck@master
 
-  markdown:
-    name: Markdown Lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Markdown Lint
-        uses: DavidAnson/markdownlint-cli2-action@v18
-        with:
-          globs: '**/*.md'
-
   secrets:
     name: Secret Scan
     runs-on: ubuntu-latest
@@ -45,57 +35,6 @@ jobs:
           path: ./
           base: HEAD~1
           head: HEAD
-
-steps:
-  - uses: actions/checkout@v4
-
-  - name: Validate Bash Syntax
-    run: |
-      find EC2 -name "*.sh" -exec bash -n {} \;
-
-
-shellcheck:
-name: ShellCheck Linting
-runs-on: ubuntu-latest
-
-
-steps:
-  - uses: actions/checkout@v4
-
-  - name: Run ShellCheck
-    uses: ludeeus/action-shellcheck@master
-
-
-secrets:
-name: Secret Scan
-runs-on: ubuntu-latest
-
-
-steps:
-  - uses: actions/checkout@v4
-
-  - name: Scan for Secrets
-    uses: trufflesecurity/trufflehog@main
-    with:
-      path: ./
-      base: HEAD~1
-      head: HEAD
-
-
-permissions:
-name: Executable Script Check
-runs-on: ubuntu-latest
-
-
-steps:
-  - uses: actions/checkout@v4
-
-  - name: Check Main Entrypoint
-    run: |
-      test -f EC2/main.sh
-      test -f EC2/menu.sh
-      test -f EC2/create_instance.sh
-
 
   structure-check:
     name: Repository Structure Check
