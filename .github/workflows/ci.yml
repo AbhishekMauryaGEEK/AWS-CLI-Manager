@@ -34,7 +34,6 @@ jobs:
         with:
           globs: '**/*.md'
 
-<<<<<<< Updated upstream
   secrets:
     name: Secret Scan
     runs-on: ubuntu-latest
@@ -46,7 +45,7 @@ jobs:
           path: ./
           base: HEAD~1
           head: HEAD
-=======
+
 steps:
   - uses: actions/checkout@v4
 
@@ -96,7 +95,7 @@ steps:
       test -f EC2/main.sh
       test -f EC2/menu.sh
       test -f EC2/create_instance.sh
->>>>>>> Stashed changes
+
 
   structure-check:
     name: Repository Structure Check
