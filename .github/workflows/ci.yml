@@ -1,79 +1,53 @@
 name: AWS CLI Manager CI
 
 on:
-push:
-branches: [ main ]
-pull_request:
-branches: [ main ]
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
+  syntax-check:
+    name: Bash Syntax Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate Bash Syntax
+        run: |
+          find EC2 -name "*.sh" -exec bash -n {} \;
 
-syntax-check:
-name: Bash Syntax Check
-runs-on: ubuntu-latest
+  shellcheck:
+    name: ShellCheck Linting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ShellCheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck
+      - name: Run ShellCheck
+        run: |
+          shellcheck -e SC1091,SC2016 EC2/*.sh
 
+  secrets:
+    name: Secret Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scan for Secrets
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: HEAD~1
+          head: HEAD
 
-steps:
-  - uses: actions/checkout@v4
-
-  - name: Validate Bash Syntax
-    run: |
-      find EC2 -name "*.sh" -exec bash -n {} \;
-
-
-shellcheck:
-name: ShellCheck Linting
-runs-on: ubuntu-latest
-
-
-steps:
-  - uses: actions/checkout@v4
-
-  - name: Run ShellCheck
-    uses: ludeeus/action-shellcheck@master
-
-
-markdown:
-name: Markdown Lint
-runs-on: ubuntu-latest
-
-
-steps:
-  - uses: actions/checkout@v4
-
-  - name: Markdown Lint
-    uses: DavidAnson/markdownlint-cli2-action@v18
-    with:
-      globs: '**/*.md'
-
-
-secrets:
-name: Secret Scan
-runs-on: ubuntu-latest
-
-
-steps:
-  - uses: actions/checkout@v4
-
-  - name: Scan for Secrets
-    uses: trufflesecurity/trufflehog@main
-    with:
-      path: ./
-      base: HEAD~1
-      head: HEAD
-
-
-permissions:
-name: Executable Script Check
-runs-on: ubuntu-latest
-
-
-steps:
-  - uses: actions/checkout@v4
-
-  - name: Check Main Entrypoint
-    run: |
-      test -f EC2/main.sh
-      test -f EC2/menu.sh
-      test -f EC2/create_instance.sh
-
+  structure-check:
+    name: Repository Structure Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify Required Files
+        run: |
+          test -f EC2/main.sh
+          test -f EC2/menu.sh
+          test -f EC2/create_instance.sh

@@ -3,7 +3,7 @@
 create_keypair() {
 
     echo ""
-    read -p "Enter Key Pair Name: " KEY_NAME
+    read -r -p "Enter Key Pair Name: " KEY_NAME
 
     if [ -z "$KEY_NAME" ]; then
         echo "[ERROR] Key name cannot be empty"
@@ -47,7 +47,7 @@ choose_keypair() {
     list_keypairs
 
     echo ""
-    read -p "Enter Key Pair Name: " KEY_NAME
+    read -r -p "Enter Key Pair Name: " KEY_NAME
 
     if [ -z "$KEY_NAME" ]; then
         echo "[ERROR] Invalid key pair"

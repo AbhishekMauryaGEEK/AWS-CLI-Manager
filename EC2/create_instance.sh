@@ -6,7 +6,7 @@ echo ""
 echo "===== CREATE EC2 INSTANCE ====="
 echo ""
 
-read -p "Instance Name: " INSTANCE_NAME
+read -r -p "Instance Name: " INSTANCE_NAME
 
 if [ -z "$INSTANCE_NAME" ]; then
     echo "[ERROR] Instance name required"
@@ -19,7 +19,7 @@ echo "1) t2.micro"
 echo "2) t3.micro"
 echo ""
 
-read -p "Choice: " TYPE_CHOICE
+read -r -p "Choice: " TYPE_CHOICE
 
 case "$TYPE_CHOICE" in
     1) INSTANCE_TYPE="t2.micro" ;;
@@ -37,19 +37,19 @@ echo ""
 list_keypairs
 
 echo ""
-read -p "Enter Key Pair Name: " KEY_NAME
+read -r -p "Enter Key Pair Name: " KEY_NAME
 
 if [ -z "$KEY_NAME" ]; then
     echo "[ERROR] Key pair required"
     return
 fi
 
-aws ec2 describe-key-pairs \
+if  aws ec2 describe-key-pairs \
     --region "$AWS_REGION" \
     --key-names "$KEY_NAME" \
-    >/dev/null 2>&1
+    >/dev/null 2>&1 ; then
 
-if [ $? -ne 0 ]; then
+
     echo "[ERROR] Key pair does not exist"
     return
 fi
@@ -62,7 +62,7 @@ echo "3) Ubuntu 22.04 LTS"
 echo "4) Debian 12"
 echo ""
 
-read -p "Choice: " DISTRO_CHOICE
+read -r -p "Choice: " DISTRO_CHOICE
 
 case "$DISTRO_CHOICE" in
 
@@ -150,7 +150,7 @@ echo "AMI       : $AMI_ID"
 echo "============================="
 echo ""
 
-read -p "Launch instance? (y/n): " CONFIRM
+read -r -p "Launch instance? (y/n): " CONFIRM
 
 [[ "$CONFIRM" != "y" ]] && return
 
