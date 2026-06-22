@@ -10,7 +10,7 @@ select_region() {
     echo "4) eu-west-1 (Ireland)"
     echo ""
 
-    read -p "Choice: " choice
+    read -r -p "Choice: " choice
 
     case "$choice" in
         1) AWS_REGION="ap-south-1" ;;

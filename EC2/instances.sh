@@ -20,7 +20,7 @@ select_instance() {
     list_instances
 
     echo ""
-    read -p "Enter Instance ID: " INSTANCE_ID
+    read -r -p "Enter Instance ID: " INSTANCE_ID
 
     if [ -z "$INSTANCE_ID" ]; then
         echo "[ERROR] Instance ID required"
@@ -62,7 +62,7 @@ terminate_instance() {
     echo "WARNING: This will permanently delete the instance."
     echo ""
 
-    read -p "Type DELETE to continue: " confirm
+    read -r -p "Type DELETE to continue: " confirm
 
     [[ "$confirm" != "DELETE" ]] && return
 
@@ -84,7 +84,7 @@ echo ""
 list_instances
 
 echo ""
-read -p "Enter Instance ID: " INSTANCE_ID
+read -r -p "Enter Instance ID: " INSTANCE_ID
 
 if [ -z "$INSTANCE_ID" ]; then
     echo "[ERROR] Instance ID required"
@@ -111,7 +111,7 @@ echo "2) ubuntu (Ubuntu)"
 echo "3) admin (Debian)"
 echo ""
 
-read -p "Choice: " USER_CHOICE
+read -r -p "Choice: " USER_CHOICE
 
 case "$USER_CHOICE" in
     1) SSH_USER="ec2-user" ;;
@@ -124,7 +124,7 @@ case "$USER_CHOICE" in
 esac
 
 echo ""
-read -p "PEM File Path: " PEM_FILE
+read -r -p "PEM File Path: " PEM_FILE
 
 if [ ! -f "$PEM_FILE" ]; then
     echo "[ERROR] PEM file not found"
@@ -151,7 +151,7 @@ reboot_instance() {
     list_instances
 
     echo ""
-    read -p "Enter Instance ID: " INSTANCE_ID
+    read -r -p "Enter Instance ID: " INSTANCE_ID
 
     if [ -z "$INSTANCE_ID" ]; then
         echo "[ERROR] Instance ID required"
@@ -159,7 +159,7 @@ reboot_instance() {
     fi
 
     echo ""
-    read -p "Are you sure? (y/n): " CONFIRM
+    read -r -p "Are you sure? (y/n): " CONFIRM
 
     [[ "$CONFIRM" != "y" ]] && return
 
@@ -180,7 +180,7 @@ instance_details() {
     list_instances
 
     echo ""
-    read -p "Enter Instance ID: " INSTANCE_ID
+    read -r -p "Enter Instance ID: " INSTANCE_ID
 
     if [ -z "$INSTANCE_ID" ]; then
         echo "[ERROR] Instance ID required"

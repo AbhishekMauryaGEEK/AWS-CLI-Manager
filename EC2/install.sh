@@ -8,7 +8,7 @@ error_exit() {
 
 pause() {
     echo ""
-    read -p "Press Enter to continue..."
+    read -r -p "Press Enter to continue..."
 }
 
 detect_os() {
@@ -60,7 +60,7 @@ check_aws_cli() {
 
     echo ""
     echo "AWS CLI not found."
-    read -p "Install AWS CLI? (y/n): " ans
+    read -r -p "Install AWS CLI? (y/n): " ans
 
     [[ "$ans" != "y" ]] && error_exit "AWS CLI required"
 

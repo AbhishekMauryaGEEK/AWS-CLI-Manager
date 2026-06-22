@@ -1,3 +1,3 @@
 #!/bin/bash
 
-AWS_REGION="ap-south-1"
+export AWS_REGION="ap-south-1"

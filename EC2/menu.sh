@@ -39,7 +39,7 @@ do
     echo "0. Exit"
     echo ""
 
-    read -p "Select: " choice
+    read -r -p "Select: " choice
 
     case "$choice" in
 
@@ -64,7 +64,7 @@ do
     esac
 
     echo ""
-    read -p "Press Enter to continue..."
+    read -r -p "Press Enter to continue..."
 done
 
 }
