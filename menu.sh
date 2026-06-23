@@ -55,12 +55,20 @@ do
     echo "6. Reboot Instance"
     echo "7. Terminate Instance"
     echo ""
+    echo "------------------------------------------"
+    echo "KEY PAIRS"
+    echo "------------------------------------------"
     echo "8. Create Key Pair"
     echo "9. List Key Pairs"
     echo ""
-    echo "10. SSH Into Instance"
+    echo "------------------------------------------"
+    echo "SETTINGS"
+    echo "------------------------------------------"
+    echo "10. Change Region"
+    echo "11. SSH Into Instance"
     echo ""
-    echo "0. Back"
+
+    echo "0. Exit"
     echo ""
 
     read -r -p "Select: " choice
