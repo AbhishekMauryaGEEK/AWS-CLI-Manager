@@ -9,6 +9,8 @@ source ./EC2/keypairs.sh
 source ./EC2/instances.sh
 source ./EC2/create_instance.sh
 
+source ./S3/buckets.sh
+
 source ./menu.sh
 
 check_aws_cli
