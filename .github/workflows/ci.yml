@@ -44,10 +44,17 @@ jobs:
   structure-check:
     name: Repository Structure Check
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
       - name: Verify Required Files
         run: |
-          test -f EC2/main.sh
-          test -f EC2/menu.sh
+          test -f main.sh
+          test -f menu.sh
+          test -f Core/config.sh
+          test -f Core/auth.sh
+          test -f Core/install.sh
+          test -f Core/regions.sh
           test -f EC2/create_instance.sh
+          test -f EC2/instances.sh
+          test -f EC2/keypairs.sh
