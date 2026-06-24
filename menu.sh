@@ -146,3 +146,48 @@ do
 done
 
 }
+
+iam_menu() {
+
+while true
+do
+    clear
+
+    echo "=============================="
+    echo "          IAM MENU"
+    echo "=============================="
+    echo ""
+
+    echo "1. Create User"
+    echo "2. List User"
+    echo "3. Delete User"
+
+    echo "4. Create Access Key"
+    echo "5. List  Access Key"
+    echo "6. Delete Access Key"
+
+    echo ""
+    echo "0. Back"
+    echo ""
+
+    read -r -p "Select: " choice
+
+    case "$choice" in
+
+        1) create_user ;;
+        2) list_users ;;
+        3) delete_user ;;
+        4) create_access_key ;;
+        5) list_access_keys ;;
+        6) delete_access_key ;;
+        0) break ;;
+
+        *) echo "Invalid option" ;;
+
+    esac
+
+    echo ""
+    read -r -p "Press Enter to continue..."
+
+done
+}
