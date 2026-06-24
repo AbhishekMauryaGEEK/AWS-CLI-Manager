@@ -11,6 +11,8 @@ source ./EC2/create_instance.sh
 
 source ./S3/buckets.sh
 
+source ./IAM/users.sh
+
 source ./menu.sh
 
 check_aws_cli
