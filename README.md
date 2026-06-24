@@ -1,6 +1,6 @@
 # AWS CLI Manager
 
-> A modular, menu-driven AWS infrastructure management tool built on top of the AWS CLI.
+> A modular, menu-driven AWS infrastructure management tool built on top of the AWS CLI .
 
 <!-- Badges — replace the placeholders below with live badge URLs (e.g. shields.io) once available. -->
 <p align="left">
