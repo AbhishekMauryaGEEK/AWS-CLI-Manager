@@ -123,3 +123,112 @@ delete_user() {
     fi
 }
 
+create_access_key() {
+
+    select_user || return
+
+    echo ""
+
+    ACCESS_KEY_OUTPUT=$(
+        aws iam create-access-key \
+            --user-name "$SELECTED_USER" \
+            --query 'AccessKey.[AccessKeyId,SecretAccessKey]' \
+            --output text
+    )
+
+    if [ $? -ne 0 ]; then
+        echo "[ERROR] Failed to create access key"
+        return 1
+    fi
+
+    ACCESS_KEY_ID=$(echo "$ACCESS_KEY_OUTPUT" | awk '{print $1}')
+    SECRET_ACCESS_KEY=$(echo "$ACCESS_KEY_OUTPUT" | awk '{print $2}')
+
+    echo ""
+    echo "================================="
+    echo "      ACCESS KEY CREATED"
+    echo "================================="
+    echo ""
+    echo "User              : $SELECTED_USER"
+    echo "Access Key ID     : $ACCESS_KEY_ID"
+    echo "Secret Access Key : $SECRET_ACCESS_KEY"
+    echo ""
+    echo "[WARNING] Save this secret key now."
+    echo "[WARNING] AWS will not show it again."
+}
+
+list_access_keys() {
+
+    select_user || return
+
+    echo ""
+    echo "================================="
+    echo "       ACCESS KEYS"
+    echo "================================="
+    echo ""
+
+    aws iam list-access-keys \
+        --user-name "$SELECTED_USER" \
+        --query 'AccessKeyMetadata[].AccessKeyId' \
+        --output text | tr '\t' '\n'
+}
+
+select_access_key() {
+
+    mapfile -t ACCESS_KEYS < <(
+        aws iam list-access-keys \
+            --user-name "$SELECTED_USER" \
+            --query 'AccessKeyMetadata[].AccessKeyId' \
+            --output text | tr '\t' '\n'
+    )
+
+    if [ ${#ACCESS_KEYS[@]} -eq 0 ]; then
+        echo ""
+        echo "[INFO] No access keys found"
+        return 1
+    fi
+
+    echo ""
+    echo "================================="
+    echo "       ACCESS KEYS"
+    echo "================================="
+    echo ""
+
+    for i in "${!ACCESS_KEYS[@]}"
+    do
+        echo "$((i+1))). ${ACCESS_KEYS[$i]}"
+    done
+
+    echo ""
+
+    read -r -p "Choose Key: " CHOICE
+
+    SELECTED_KEY="${ACCESS_KEYS[$((CHOICE-1))]}"
+}
+
+delete_access_key() {
+
+    select_user || return
+    select_access_key || return
+
+    echo ""
+    echo "Access Key: $SELECTED_KEY"
+
+    read -r -p "Type DELETE to continue: " CONFIRM
+
+    if [[ "$CONFIRM" != "DELETE" ]]; then
+        echo "[INFO] Cancelled"
+        return
+    fi
+
+    if aws iam delete-access-key \
+        --user-name "$SELECTED_USER" \
+        --access-key-id "$SELECTED_KEY"
+    then
+        echo ""
+        echo "[OK] Access key deleted"
+    else
+        echo ""
+        echo "[ERROR] Failed to delete access key"
+    fi
+}
