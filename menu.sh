@@ -114,8 +114,11 @@ do
     echo "2. List Buckets"
     echo "3. Delete Bucket"
     echo ""
-    echo "4. Upload File"
-    echo "5. Download File"
+    echo "4. Upload Objects"
+    echo "5. Download Objects"
+    echo "6. Delete Objects"
+    echo "7. List Objects"
+
     echo ""
     echo "0. Back"
     echo ""
@@ -129,7 +132,8 @@ do
         3) delete_bucket ;;
         4) upload_file ;;
         5) download_file ;;
-
+        6) delete_object ;;
+        7) list_objects ;;
         0) break ;;
 
         *) echo "Invalid option" ;;

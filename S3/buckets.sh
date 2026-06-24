@@ -5,7 +5,7 @@ select_bucket() {
     mapfile -t BUCKETS < <(
         aws s3api list-buckets \
         --query 'Buckets[].Name' \
-        --output text
+        --output text | tr '\t' '\n'
     )
 
     if [ ${#BUCKETS[@]} -eq 0 ]; then
@@ -54,6 +54,38 @@ list_bucket_objects() {
     fi
 
     aws s3 ls "s3://$SELECTED_BUCKET"
+}
+
+select_object() {
+
+    mapfile -t OBJECTS < <(
+        aws s3api list-objects-v2 \
+        --bucket "$SELECTED_BUCKET" \
+        --query 'Contents[].Key' \
+        --output text
+    )
+
+    if [ ${#OBJECTS[@]} -eq 0 ]; then
+        echo "[INFO] Bucket is empty"
+        return 1
+    fi
+
+    echo ""
+    echo "================================="
+    echo "      OBJECTS IN BUCKET"
+    echo "================================="
+    echo ""
+
+    for i in "${!OBJECTS[@]}"
+    do
+        echo "$((i+1))). ${OBJECTS[$i]}"
+    done
+
+    echo ""
+
+    read -r -p "Choose Object: " CHOICE
+
+    SELECTED_OBJECT="${OBJECTS[$((CHOICE-1))]}"
 }
 
 create_bucket() {
@@ -186,4 +218,36 @@ download_file() {
         echo ""
         echo "[ERROR] Download failed"
     fi
+}
+
+list_objects() {
+
+    select_bucket || return
+
+    echo ""
+    echo "================================="
+    echo "      OBJECTS IN BUCKET"
+    echo "================================="
+    echo ""
+
+    list_bucket_objects || return
+
+    echo ""
+    echo "[INFO] Bucket: $SELECTED_BUCKET"
+}
+
+delete_object() {
+
+    select_bucket || return
+    select_object || return
+
+    echo ""
+    echo "Object: $SELECTED_OBJECT"
+
+    read -r -p "Delete object? (y/n): " CONFIRM
+
+    [[ "$CONFIRM" != "y" ]] && return
+
+    aws s3 rm \
+      "s3://$SELECTED_BUCKET/$SELECTED_OBJECT"
 }
