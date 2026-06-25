@@ -232,3 +232,415 @@ delete_access_key() {
         echo "[ERROR] Failed to delete access key"
     fi
 }
+
+select_group() {
+
+    mapfile -t IAM_GROUPS < <(
+        aws iam list-groups \
+            --query 'Groups[].GroupName' \
+            --output text | tr '\t' '\n'
+    )
+
+    if [ ${#IAM_GROUPS[@]} -eq 0 ]; then
+        echo ""
+        echo "[INFO] No groups found"
+        return 1
+    fi
+
+    echo ""
+    echo "================================="
+    echo "      AVAILABLE IAM_GROUPS"
+    echo "================================="
+    echo ""
+
+    for i in "${!IAM_GROUPS[@]}"
+    do
+        echo "$((i+1))). ${IAM_GROUPS[$i]}"
+    done
+
+    echo ""
+
+    read -r -p "Choose Group: " CHOICE
+
+    if ! [[ "$CHOICE" =~ ^[0-9]+$ ]] ||
+       [ "$CHOICE" -lt 1 ] ||
+       [ "$CHOICE" -gt "${#IAM_GROUPS[@]}" ]
+    then
+        echo "[ERROR] Invalid choice"
+        return 1
+    fi
+
+    SELECTED_GROUP="${IAM_GROUPS[$((CHOICE-1))]}"
+
+    echo ""
+    echo "[INFO] Selected: $SELECTED_GROUP"
+
+    return 0
+}
+
+create_group() {
+
+    echo ""
+
+    read -r -p "Group Name: " GROUP_NAME
+
+    if aws iam create-group \
+        --group-name "$GROUP_NAME" >/dev/null 2>&1
+    then
+        echo ""
+        echo "================================="
+        echo "        GROUP CREATED"
+        echo "================================="
+        echo ""
+        echo "Group : $GROUP_NAME"
+    else
+        echo ""
+        echo "[ERROR] Failed to create group"
+    fi
+}
+
+list_groups() {
+
+    mapfile -t IAM_GROUPS < <(
+        aws iam list-groups \
+            --query 'Groups[].GroupName' \
+            --output text | tr '\t' '\n'
+    )
+
+    echo ""
+    echo "================================="
+    echo "      AVAILABLE IAM_GROUPS"
+    echo "================================="
+    echo ""
+
+    if [ ${#IAM_GROUPS[@]} -eq 0 ]; then
+        echo "[INFO] No groups found"
+        return
+    fi
+
+    for i in "${!IAM_GROUPS[@]}"
+    do
+        echo "$((i+1))). ${IAM_GROUPS[$i]}"
+    done
+
+    echo ""
+    echo "Total Groups : ${#IAM_GROUPS[@]}"
+}
+
+delete_group() {
+
+    select_group || return
+
+    echo ""
+    echo "Group : $SELECTED_GROUP"
+
+    read -r -p "Type DELETE to continue: " CONFIRM
+
+    if [[ "$CONFIRM" != "DELETE" ]]; then
+        echo "[INFO] Cancelled"
+        return
+    fi
+
+    if aws iam delete-group \
+        --group-name "$SELECTED_GROUP"
+    then
+        echo ""
+        echo "================================="
+        echo "        GROUP DELETED"
+        echo "================================="
+        echo ""
+        echo "Group : $SELECTED_GROUP"
+    else
+        echo ""
+        echo "[ERROR] Failed to delete group"
+    fi
+}
+
+add_user_to_group() {
+
+    select_user || return
+    select_group || return
+
+    if aws iam add-user-to-group \
+        --user-name "$SELECTED_USER" \
+        --group-name "$SELECTED_GROUP"
+    then
+        echo ""
+        echo "================================="
+        echo "      USER ADDED TO GROUP"
+        echo "================================="
+        echo ""
+        echo "User  : $SELECTED_USER"
+        echo "Group : $SELECTED_GROUP"
+    else
+        echo ""
+        echo "[ERROR] Failed to add user to group"
+    fi
+}
+
+remove_user_from_group() {
+
+    select_user || return
+    select_group || return
+
+    if aws iam remove-user-from-group \
+        --user-name "$SELECTED_USER" \
+        --group-name "$SELECTED_GROUP"
+    then
+        echo ""
+        echo "================================="
+        echo "   USER REMOVED FROM GROUP"
+        echo "================================="
+        echo ""
+        echo "User  : $SELECTED_USER"
+        echo "Group : $SELECTED_GROUP"
+    else
+        echo ""
+        echo "[ERROR] Failed to remove user from group"
+    fi
+}
+
+attach_policy() {
+
+    select_group || return
+
+    POLICIES=(
+        "AdministratorAccess"
+        "AmazonS3FullAccess"
+        "AmazonS3ReadOnlyAccess"
+        "AmazonEC2FullAccess"
+        "AmazonEC2ReadOnlyAccess"
+        "IAMFullAccess"
+        "IAMReadOnlyAccess"
+    )
+
+    POLICY_ARNS=(
+        "arn:aws:iam::aws:policy/AdministratorAccess"
+        "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+        "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
+        "arn:aws:iam::aws:policy/AmazonEC2FullAccess"
+        "arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess"
+        "arn:aws:iam::aws:policy/IAMFullAccess"
+        "arn:aws:iam::aws:policy/IAMReadOnlyAccess"
+    )
+
+    SELECTED_POLICY_ARNS=()
+    SELECTED_POLICY_NAMES=()
+
+    while true
+    do
+        clear
+
+        echo "================================="
+        echo "       ATTACH POLICIES"
+        echo "================================="
+        echo ""
+        echo "Group : $SELECTED_GROUP"
+        echo ""
+
+        for i in "${!POLICIES[@]}"
+        do
+            MARK=" "
+
+            for ARN in "${SELECTED_POLICY_ARNS[@]}"
+            do
+                if [[ "$ARN" == "${POLICY_ARNS[$i]}" ]]; then
+                    MARK="x"
+                    break
+                fi
+            done
+
+            echo "[$MARK] $((i+1))). ${POLICIES[$i]}"
+        done
+
+        echo ""
+        echo "0). Apply Selected Policies"
+        echo ""
+
+        read -r -p "Select Policy: " CHOICE
+
+        if [[ "$CHOICE" == "0" ]]; then
+            break
+        fi
+
+        if ! [[ "$CHOICE" =~ ^[0-9]+$ ]] ||
+           [ "$CHOICE" -lt 1 ] ||
+           [ "$CHOICE" -gt "${#POLICIES[@]}" ]
+        then
+            echo "[ERROR] Invalid choice"
+            sleep 1
+            continue
+        fi
+
+        INDEX=$((CHOICE-1))
+
+        DUPLICATE=false
+
+        for ARN in "${SELECTED_POLICY_ARNS[@]}"
+        do
+            if [[ "$ARN" == "${POLICY_ARNS[$INDEX]}" ]]; then
+                DUPLICATE=true
+                break
+            fi
+        done
+
+        if $DUPLICATE; then
+            echo ""
+            echo "[INFO] Policy already selected."
+            sleep 1
+            continue
+        fi
+
+        SELECTED_POLICY_ARNS+=("${POLICY_ARNS[$INDEX]}")
+        SELECTED_POLICY_NAMES+=("${POLICIES[$INDEX]}")
+
+    done
+
+    if [ ${#SELECTED_POLICY_ARNS[@]} -eq 0 ]; then
+        echo ""
+        echo "[INFO] No policies selected."
+        return
+    fi
+
+    echo ""
+    echo "Applying Policies..."
+    echo ""
+
+    for i in "${!SELECTED_POLICY_ARNS[@]}"
+    do
+        if aws iam attach-group-policy \
+            --group-name "$SELECTED_GROUP" \
+            --policy-arn "${SELECTED_POLICY_ARNS[$i]}"
+        then
+            echo "[OK] ${SELECTED_POLICY_NAMES[$i]}"
+        else
+            echo "[ERROR] ${SELECTED_POLICY_NAMES[$i]}"
+        fi
+    done
+
+    echo ""
+    echo "================================="
+    echo "      OPERATION COMPLETE"
+    echo "================================="
+}
+
+list_policies() {
+
+    select_group || return
+
+    mapfile -t ATTACHED_POLICIES < <(
+        aws iam list-attached-group-policies \
+            --group-name "$SELECTED_GROUP" \
+            --query 'AttachedPolicies[].PolicyName' \
+            --output text | tr '\t' '\n'
+    )
+
+    echo ""
+    echo "================================="
+    echo "     ATTACHED POLICIES"
+    echo "================================="
+    echo ""
+    echo "Group : $SELECTED_GROUP"
+    echo ""
+
+    if [ ${#ATTACHED_POLICIES[@]} -eq 0 ]; then
+        echo "[INFO] No policies attached."
+        return
+    fi
+
+    for i in "${!ATTACHED_POLICIES[@]}"
+    do
+        echo "$((i+1))). ${ATTACHED_POLICIES[$i]}"
+    done
+
+    echo ""
+    echo "Total Policies : ${#ATTACHED_POLICIES[@]}"
+}
+
+detach_policy() {
+
+    select_group || return
+
+    mapfile -t POLICY_NAMES < <(
+        aws iam list-attached-group-policies \
+            --group-name "$SELECTED_GROUP" \
+            --query 'AttachedPolicies[].PolicyName' \
+            --output text | tr '\t' '\n'
+    )
+
+    mapfile -t POLICY_ARNS < <(
+        aws iam list-attached-group-policies \
+            --group-name "$SELECTED_GROUP" \
+            --query 'AttachedPolicies[].PolicyArn' \
+            --output text | tr '\t' '\n'
+    )
+
+    if [ ${#POLICY_NAMES[@]} -eq 0 ]; then
+        echo ""
+        echo "[INFO] No policies attached."
+        return
+    fi
+
+    while true
+    do
+        clear
+
+        echo "================================="
+        echo "      DETACH POLICIES"
+        echo "================================="
+        echo ""
+        echo "Group : $SELECTED_GROUP"
+        echo ""
+
+        for i in "${!POLICY_NAMES[@]}"
+        do
+            echo "$((i+1))). ${POLICY_NAMES[$i]}"
+        done
+
+        echo ""
+        echo "0). Finish"
+        echo ""
+
+        read -r -p "Select Policy: " CHOICE
+
+        if [[ "$CHOICE" == "0" ]]; then
+            break
+        fi
+
+        if ! [[ "$CHOICE" =~ ^[0-9]+$ ]] ||
+           [ "$CHOICE" -lt 1 ] ||
+           [ "$CHOICE" -gt "${#POLICY_NAMES[@]}" ]
+        then
+            echo "[ERROR] Invalid choice"
+            sleep 1
+            continue
+        fi
+
+        INDEX=$((CHOICE-1))
+
+        if aws iam detach-group-policy \
+            --group-name "$SELECTED_GROUP" \
+            --policy-arn "${POLICY_ARNS[$INDEX]}"
+        then
+            echo ""
+            echo "[OK] ${POLICY_NAMES[$INDEX]} detached."
+
+            unset 'POLICY_NAMES[$INDEX]'
+            unset 'POLICY_ARNS[$INDEX]'
+
+            POLICY_NAMES=("${POLICY_NAMES[@]}")
+            POLICY_ARNS=("${POLICY_ARNS[@]}")
+        else
+            echo ""
+            echo "[ERROR] Failed."
+        fi
+
+        if [ ${#POLICY_NAMES[@]} -eq 0 ]; then
+            echo ""
+            echo "[INFO] No policies remaining."
+            break
+        fi
+
+        sleep 1
+    done
+}

@@ -64,8 +64,7 @@ do
     echo "------------------------------------------"
     echo "SETTINGS"
     echo "------------------------------------------"
-    echo "10. Change Region"
-    echo "11. SSH Into Instance"
+    echo "10. SSH Into Instance"
     echo ""
 
     echo "0. Exit"
@@ -157,16 +156,30 @@ do
     echo "          IAM MENU"
     echo "=============================="
     echo ""
-
+    echo "-----USERS-------"
     echo "1. Create User"
     echo "2. List User"
     echo "3. Delete User"
-
+    echo ""
+    echo "----ACCESS KEY----"
     echo "4. Create Access Key"
     echo "5. List  Access Key"
     echo "6. Delete Access Key"
-
     echo ""
+    echo "----IAM_GROUPS----"
+    echo "7. Create Group"
+    echo "8. List Group"
+    echo "9. Delete Group"
+    echo ""
+    echo "----MEMBERSHIP----"
+    echo "10. Add User to Group"
+    echo "11. Remove User from Group"
+    echo ""
+    echo "----POLICIES----"
+    echo "12. Attach Policies"
+    echo "13. List Attached Policies"
+    echo "14. Detach Policies"
+
     echo "0. Back"
     echo ""
 
@@ -180,6 +193,15 @@ do
         4) create_access_key ;;
         5) list_access_keys ;;
         6) delete_access_key ;;
+        7) create_group ;;
+        8) list_groups ;;
+        9) delete_group ;;
+
+        10) add_user_to_group ;;
+        11) remove_user_from_group ;;
+        12) attach_policy ;;
+        13) list_policies ;;
+        14) detach_policy ;;
         0) break ;;
 
         *) echo "Invalid option" ;;
@@ -191,3 +213,4 @@ do
 
 done
 }
+
