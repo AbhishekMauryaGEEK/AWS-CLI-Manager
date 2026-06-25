@@ -44,7 +44,7 @@ if [ -z "$KEY_NAME" ]; then
     return
 fi
 
-if  aws ec2 describe-key-pairs \
+if ! aws ec2 describe-key-pairs \
     --region "$AWS_REGION" \
     --key-names "$KEY_NAME" \
     >/dev/null 2>&1 ; then
