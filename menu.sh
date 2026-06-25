@@ -10,12 +10,17 @@ do
     echo "   AWS MANAGEMENT CONSOLE"
     echo "=============================="
     echo ""
+    echo "Current User : $(current_identity)"
+    echo "Region       : $AWS_REGION"
+    echo ""
     echo "1. EC2"
     echo "2. S3"
     echo "3. IAM"
     echo "4. VPC"
     echo ""
-    echo "5. Change Region"
+    echo "5. Login"
+    echo "6. Logout"
+    echo "7. Change Region"
     echo ""
     echo "0. Exit"
     echo ""
@@ -27,7 +32,9 @@ do
         2) s3_menu ;;
         3) iam_menu ;;
         4) vpc_menu ;;
-        5) select_region ;;
+        5) login ;;
+        6) logout ;;
+        7) select_region ;;
         0) exit 0 ;;
         *) echo "Invalid option" ;;
     esac

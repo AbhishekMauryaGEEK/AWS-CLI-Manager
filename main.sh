@@ -4,6 +4,7 @@ source ./Core/config.sh
 source ./Core/install.sh
 source ./Core/auth.sh
 source ./Core/regions.sh
+source ./Core/session.sh
 
 source ./EC2/keypairs.sh
 source ./EC2/instances.sh
