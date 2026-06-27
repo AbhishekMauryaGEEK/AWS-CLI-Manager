@@ -10,7 +10,8 @@ do
     echo "   AWS MANAGEMENT CONSOLE"
     echo "=============================="
     echo ""
-    echo "Current User : $(current_identity)"
+    echo "Current User : $CURRENT_USER"
+    echo "Account      : $ACCOUNT_ID"
     echo "Region       : $AWS_REGION"
     echo ""
     echo "1. EC2"
@@ -221,3 +222,83 @@ do
 done
 }
 
+vpc_menu() {
+
+while true
+do
+    clear
+
+    echo "=============================="
+    echo "          VPC MENU"
+    echo "=============================="
+    echo ""
+
+    echo "--------VPCS--------"
+    echo "1. Create VPC"
+    echo "2. List VPCs"
+    echo "3. Delete VPC"
+    echo ""
+
+    echo "------SUBNETS-------"
+    echo "4. Create Subnet"
+    echo "5. List Subnets"
+    echo "6. Delete Subnet"
+    echo ""
+
+    echo "---INTERNET GATEWAY---"
+    echo "7. Create Internet Gateway"
+    echo "8. List Internet Gateways"
+    echo "9. Attach Internet Gateway"
+    echo "10. Detach Internet Gateway"
+    echo "11. Delete Internet Gateway"
+    echo ""
+
+    echo "----ROUTE TABLES----"
+    echo "12. Create Route Table"
+    echo "13. List Route Tables"
+    echo "14. Associate Route Table"
+    echo "15. Delete Route Table"
+    echo ""
+
+    echo "0. Back"
+    echo ""
+
+    read -r -p "Select: " choice
+
+    case "$choice" in
+
+        # VPC
+        1) create_vpc ;;
+        2) list_vpcs ;;
+        3) delete_vpc ;;
+
+        # Subnets
+        4) create_subnet ;;
+        5) list_subnets ;;
+        6) delete_subnet ;;
+
+        # Internet Gateway
+        7) create_internet_gateway ;;
+        8) list_internet_gateways ;;
+        9) attach_internet_gateway ;;
+        10) detach_internet_gateway ;;
+        11) delete_internet_gateway ;;
+
+        # Route Tables
+        12) create_route_table ;;
+        13) list_route_tables ;;
+        14) associate_route_table ;;
+        15) delete_route_table ;;
+
+        0) break ;;
+
+        *) echo "Invalid option" ;;
+
+    esac
+
+    echo ""
+    read -r -p "Press Enter to continue..."
+
+done
+
+}
