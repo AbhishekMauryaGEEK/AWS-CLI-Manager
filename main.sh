@@ -14,10 +14,16 @@ source ./S3/buckets.sh
 
 source ./IAM/users.sh
 
+source ./VPC/vpcs.sh
+source ./VPC/subnets.sh
+source ./VPC/internet_gateway.sh
+source ./VPC/route_tables.sh
+
 source ./menu.sh
 
 check_aws_cli
 check_credentials
+load_session
 select_region
 
 main_menu
