@@ -1,16 +1,13 @@
 # AWS CLI Manager
 
+A modular, interactive Bash console for managing AWS infrastructure on top of the AWS CLI. It replaces long, flag-heavy `aws` commands with a guided, menu-driven workflow for EC2, S3, IAM, and VPC — while remaining a thin, inspectable wrapper around the official CLI.
 
-> A modular, menu-driven AWS infrastructure management tool built on top of the AWS CLI .
-
-<!-- Badges — replace the placeholders below with live badge URLs (e.g. shields.io) once available. -->
 <p align="left">
   <img alt="Shell" src="https://img.shields.io/badge/shell-bash-121011" />
   <img alt="Platform" src="https://img.shields.io/badge/platform-linux%20%7C%20macOS-lightgrey" />
-  <img alt="Status" src="https://img.shields.io/badge/status-early%20development-orange" />
-  <img alt="License" src="https://img.shields.io/badge/license-TBD-blue" />
-  <!-- <img alt="CI" src="https://img.shields.io/github/actions/workflow/status/<owner>/<repo>/ci.yml" /> -->
-  <!-- <img alt="Release" src="https://img.shields.io/github/v/release/<owner>/<repo>" /> -->
+  <img alt="AWS CLI" src="https://img.shields.io/badge/aws--cli-v2-232f3e" />
+  <img alt="License" src="https://img.shields.io/badge/license-MIT-green" />
+  <img alt="CI" src="https://img.shields.io/github/actions/workflow/status/AbhishekMauryaGEEK/AWS-CLI-Manager/ci.yml?branch=main" />
 </p>
 
 ---
@@ -18,171 +15,125 @@
 ## Table of Contents
 
 - [Overview](#overview)
-- [Motivation](#motivation)
-- [Architecture](#architecture)
 - [Features](#features)
+- [Architecture Overview](#architecture-overview)
+- [Repository Structure](#repository-structure)
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Usage](#usage)
-- [Configuration](#configuration)
-- [Screenshots](#screenshots)
-- [Roadmap](#roadmap)
+- [Authentication Workflow](#authentication-workflow)
+- [Supported AWS Services](#supported-aws-services)
+- [Feature Matrix](#feature-matrix)
+- [Example CLI Screens](#example-cli-screens)
+- [Security Considerations](#security-considerations)
+- [Project Roadmap](#project-roadmap)
 - [Contributing](#contributing)
-- [Security](#security)
 - [License](#license)
 
 ---
 
 ## Overview
 
-**AWS CLI Manager** is a collection of Bash scripts that wrap the AWS CLI behind
-an interactive, numbered menu. Instead of remembering long `aws ec2 ...`
-commands and their flags, you launch a single entry point and drive common AWS
-operations through prompts.
+AWS CLI Manager is an interactive terminal application that drives the AWS CLI through a single, unified menu. It is designed for developers, students, and operators who perform routine AWS tasks from the command line and want a faster, more guided alternative to memorizing command syntax, query expressions, and region flags.
 
-The project is organized by AWS service. Each service lives in its own directory
-and exposes a self-contained menu. The first implemented service is **EC2**;
-additional services (S3, IAM, VPC) are planned and slot into the same structure
-without changing how existing modules work.
+The tool is organized as a set of self-contained service modules. A central entry point loads a shared core (authentication, session handling, region selection, environment checks) and then composes the EC2, S3, IAM, and VPC modules into a single management console.
 
-This is an early-stage tool intended for developers, students, and operators who
-want a faster, more guided way to perform routine AWS tasks from the terminal.
-It does not replace the AWS CLI, Terraform, or the AWS Console — it sits on top
-of the AWS CLI and assumes you already have (or are willing to create) AWS
-credentials.
-
----
-
-## Motivation
-
-The AWS CLI is powerful but verbose. Routine actions — launching an instance,
-finding the right AMI for a distribution, opening SSH, listing key pairs —
-require remembering command names, query expressions, filters, and region flags.
-
-AWS CLI Manager exists to:
-
-- **Reduce friction** for everyday operations by replacing memorized commands
-  with guided prompts.
-- **Encode sensible defaults** (e.g. resolving the latest AMI for a chosen
-  distribution, creating a reusable security group) so common tasks work
-  out of the box.
-- **Stay transparent** — every action is a thin wrapper around a real `aws`
-  command, so the behavior is inspectable and predictable.
-- **Grow by service** — a modular layout means new AWS services can be added
-  as independent modules rather than as edits to a monolithic script.
-
-It is deliberately scoped. It is not a configuration-management or
-infrastructure-as-code system; it is an interactive convenience layer over the
-AWS CLI.
-
----
-
-## Architecture
-
-The repository is structured **one directory per AWS service**. Each service
-directory contains small, single-responsibility scripts that are sourced by a
-`main.sh` entry point and tied together by a `menu.sh`.
-
-```
-AWS-CLI-Manager/
-├── EC2/
-│   ├── main.sh             # Entry point: sources modules, runs pre-flight checks, starts menu
-│   ├── menu.sh             # Interactive menu and command dispatch
-│   ├── config.sh           # Shared config (default region) and helpers
-│   ├── install.sh          # AWS CLI detection / installation (Linux, macOS)
-│   ├── auth.sh             # Credential verification (aws sts get-caller-identity)
-│   ├── regions.sh          # Region selection
-│   ├── keypairs.sh         # Key pair creation and listing
-│   ├── create_instance.sh  # Instance creation workflow (type, distro, AMI, SG)
-│   └── instances.sh        # List / details / start / stop / reboot / terminate / SSH
-└── README.md
-```
-
-### Module conventions
-
-Each service module follows the same pattern, which makes the codebase
-predictable and keeps future modules consistent:
-
-| File | Responsibility |
-|------|----------------|
-| `main.sh` | Sources the other scripts, runs pre-flight checks, launches the menu. |
-| `menu.sh` | Renders the interactive menu and maps user input to functions. |
-| `config.sh` | Shared variables and small helpers (`error_exit`, `pause`). |
-| `*.sh` (feature files) | One concern per file (key pairs, instances, etc.). |
-
-### Execution flow (EC2)
-
-`main.sh` runs three pre-flight steps before showing the menu:
-
-1. `check_aws_cli` — verify the AWS CLI is installed (offer to install it if not).
-2. `check_credentials` — verify credentials via `aws sts get-caller-identity`
-   (run `aws configure` if needed).
-3. `select_region` — choose the working region.
-
-It then enters `main_menu`, which loops until you exit.
-
-### Adding a new module
-
-New services follow the existing layout: create a new top-level directory
-(e.g. `S3/`) containing its own `main.sh`, `menu.sh`, and feature scripts. This
-keeps modules independent and is why the planned **Unified AWS Manager** (v1.0)
-can later compose them into a single multi-service menu without restructuring
-existing code.
+AWS CLI Manager is intentionally scoped. It is not an infrastructure-as-code system and is not a replacement for the AWS Console, the AWS CLI, or Terraform. Every action maps directly to a real `aws` command, which keeps behavior transparent and predictable.
 
 ---
 
 ## Features
 
-### EC2 (current)
+- **Unified console** — manage EC2, S3, IAM, and VPC from one menu.
+- **Authenticated sessions** — interactive login/logout backed by AWS STS identity verification and session persistence.
+- **Modular by service** — each AWS service is an isolated module that can evolve independently.
+- **Guided workflows** — prompts for required inputs, sensible defaults, and confirmation gates for destructive actions.
+- **Automatic environment setup** — detects the AWS CLI and offers to install it on Linux and macOS.
+- **Multi-region support** — switch the active region at runtime.
+- **Transparent operations** — every menu action is a thin wrapper around a documented `aws` command.
 
-**Setup & environment**
-- AWS CLI detection and installation (Linux via `apt`, macOS via `installer`)
-- AWS credential verification and configuration (`aws sts get-caller-identity`,
-  `aws configure`)
-- Region selection (`ap-south-1`, `us-east-1`, `us-west-2`, `eu-west-1`)
+---
 
-**Instance lifecycle**
-- Create an EC2 instance (guided: name, type, distribution, key pair)
-- List instances (ID, state, type, public IP)
-- View instance details (name, state, type, public/private IP, launch time, AMI)
-- Start an instance
-- Stop an instance
-- Reboot an instance (with confirmation)
-- Terminate an instance (requires typing `DELETE` to confirm)
-- SSH into an instance (prompts for SSH user and PEM key path)
+## Architecture Overview
 
-**Key pairs**
-- Create a key pair (saved locally as `<name>.pem`, `chmod 400`)
-- List key pairs
+AWS CLI Manager follows a **modular, single-responsibility architecture**. A shared `Core` layer provides cross-cutting concerns, and each AWS service lives in its own directory as an independent module. The top-level `main.sh` sources every module and `menu.sh`, runs pre-flight checks, and launches the console.
 
-**Instance creation details**
-- Instance types: `t2.micro`, `t3.micro`
-- Multi-distribution support with automatic latest-AMI resolution:
-  - **Amazon Linux 2023** — via SSM public parameter (`ec2-user`)
-  - **Ubuntu 24.04 LTS** — via Canonical-owned AMI lookup (`ubuntu`)
-  - **Ubuntu 22.04 LTS** — via Canonical-owned AMI lookup (`ubuntu`)
-  - **Debian 12** — via Debian-owned AMI lookup (`admin`)
-- Automatically uses the account's **default VPC**
-- Creates (or reuses) a security group named `ec2-manager-sg` that opens
-  **port 22 (SSH) to `0.0.0.0/0`** — see the [Security](#security) notice
-- Waits for the instance to reach the `running` state and reports its public IP
+```
+                        ┌────────────────────┐
+                        │      main.sh       │  entry point
+                        └─────────┬──────────┘
+                                  │ sources
+              ┌───────────────────┼────────────────────┐
+              ▼                   ▼                    ▼
+        ┌───────────┐      ┌────────────┐       ┌────────────┐
+        │   Core    │      │  Service   │       │  menu.sh   │
+        │  layer    │      │  modules   │       │ dispatch   │
+        └───────────┘      └────────────┘       └────────────┘
+         config             EC2  S3              main_menu
+         install            IAM  VPC             ec2_menu / s3_menu
+         auth                                    iam_menu / vpc_menu
+         regions
+         session
+```
 
-> **Note:** Distribution AMIs are resolved at creation time from AWS, so the
-> latest available image for each distribution is used automatically.
+Each **service module** is built from the same set of responsibilities, which keeps the codebase predictable and makes new modules straightforward to add:
+
+| Concern | Description |
+|---------|-------------|
+| Menu | An interactive submenu that lists operations and dispatches user input to functions. |
+| CRUD operations | One function per AWS action (create, list, update, delete), each wrapping a single `aws` command. |
+| Helpers | Shared formatting, prompts, and resource lookups used by the module. |
+| Validation | Input checks, resource existence checks, and confirmation prompts before destructive actions. |
+| Authentication integration | Operations run within an authenticated session established by the `Core` layer. |
+
+This separation emphasizes **extensibility and maintainability**: a new service is added by creating a directory of small scripts and wiring its menu into `menu.sh`, without modifying existing modules.
+
+---
+
+## Repository Structure
+
+```
+AWS-CLI-Manager/
+├── main.sh                     # Entry point: sources modules, runs pre-flight checks, starts the console
+├── menu.sh                     # Top-level menu and per-service submenus
+├── Core/
+│   ├── config.sh               # Shared config, helpers (error_exit, pause), OS detection
+│   ├── install.sh              # AWS CLI detection and installation (Linux, macOS)
+│   ├── auth.sh                 # Credential verification (aws sts get-caller-identity)
+│   ├── regions.sh              # Region selection
+│   └── session.sh              # Login / logout / session load / session validation
+├── EC2/
+│   ├── create_instance.sh      # Guided instance creation (type, distro, AMI, key pair, SG)
+│   ├── instances.sh            # List / details / start / stop / reboot / terminate / SSH
+│   └── keypairs.sh             # Key pair creation and listing
+├── S3/
+│   └── buckets.sh              # Bucket and object operations
+├── IAM/
+│   └── users.sh               # Users, access keys, groups, membership, policies
+├── VPC/
+│   ├── vpcs.sh                 # VPC operations
+│   ├── subnets.sh              # Subnet operations
+│   ├── internet_gateway.sh     # Internet gateway operations
+│   └── route_tables.sh         # Route table operations
+├── .github/workflows/ci.yml    # Syntax check, ShellCheck, secret scan, structure check
+├── LICENSE                     # MIT
+└── README.md
+```
 
 ---
 
 ## Requirements
 
-- **Bash** (the scripts use `#!/bin/bash`)
-- **AWS CLI v2** — the tool can install it for you on Linux/macOS if missing
-- **An AWS account** with credentials (access key / secret, or an otherwise
-  configured profile)
-- **`ssh`** on your machine (for the SSH-into-instance feature)
-- Standard utilities used during AWS CLI install on Linux: `curl`, `unzip`
+| Requirement | Notes |
+|-------------|-------|
+| Bash | Scripts use `#!/bin/bash`. |
+| AWS CLI v2 | The tool detects it and can install it on Linux/macOS if missing. |
+| `jq` | Used to parse STS identity output during session handling. |
+| `ssh` | Required for the EC2 "SSH Into Instance" feature. |
+| `curl`, `unzip` | Used during AWS CLI installation on Linux. |
+| AWS account | An account with credentials (access key ID / secret access key) and appropriate IAM permissions. |
 
-> Using AWS will incur charges on your account according to AWS pricing. You are
-> responsible for any resources this tool creates.
+> Operating against AWS incurs charges according to AWS pricing. You are responsible for all resources this tool creates. See [Security Considerations](#security-considerations).
 
 ---
 
@@ -191,50 +142,163 @@ existing code.
 Clone the repository:
 
 ```bash
-[git clone <repository-url>](https://github.com/AbhishekMauryaGEEK/AWS-CLI-Manager)
+git clone https://github.com/AbhishekMauryaGEEK/AWS-CLI-Manager.git
 cd AWS-CLI-Manager
 ```
 
-Make the EC2 scripts executable:
+Make the entry point executable:
 
 ```bash
-chmod +x EC2/*.sh
+chmod +x main.sh
 ```
 
-The scripts source each other using relative paths, so run the tool **from
-inside the module directory**:
+Modules are sourced using relative paths, so run the tool **from the repository root**:
 
 ```bash
-cd EC2
 ./main.sh
 ```
 
 On first run, the tool will:
 
-1. Check for the AWS CLI and offer to install it if it is missing.
-2. Verify your AWS credentials and run `aws configure` if needed.
-3. Ask you to select a region.
+1. Verify that the AWS CLI is installed, and offer to install it if it is missing.
+2. Verify that AWS credentials are configured (running `aws configure` if needed).
+3. Load any existing session and prompt for a region.
 
 ---
 
 ## Usage
 
-Launch the EC2 manager:
+Start the console from the repository root:
 
 ```bash
-cd EC2
 ./main.sh
 ```
 
-You will be presented with the interactive menu:
+The main menu shows the active session and exposes each service:
 
 ```
 ==============================
-   AWS EC2 MANAGER
+   AWS MANAGEMENT CONSOLE
 ==============================
 
-EC2 MANAGEMENT
-------------------------------------------
+Current User : Guest
+Account      : N/A
+Region       : ap-south-1
+
+1. EC2
+2. S3
+3. IAM
+4. VPC
+
+5. Login
+6. Logout
+7. Change Region
+
+0. Exit
+```
+
+Select a service to open its submenu, choose an operation, and follow the prompts. Destructive operations (for example, terminating an instance) require explicit confirmation before they run.
+
+### Example: launch and connect to an EC2 instance
+
+1. From the main menu, select **5** to log in (or ensure credentials are already configured).
+2. Select **1** to open the EC2 menu.
+3. Select **8** to create a key pair; it is saved locally as `<name>.pem` with `400` permissions.
+4. Select **1** to create an instance — enter a name, choose an instance type, select the key pair, and pick a distribution.
+5. Select **2** to list instances and copy the new instance ID.
+6. Select **10** to SSH into the instance, providing the SSH user and the path to your `.pem` file.
+
+---
+
+## Authentication Workflow
+
+Authentication and session state are handled by the `Core` layer (`Core/auth.sh`, `Core/session.sh`). The tool maintains an in-session identity and validates it against AWS STS rather than trusting locally stored credentials blindly.
+
+```
+  ┌──────────┐      login       ┌─────────────────────┐    valid    ┌──────────────────┐
+  │  Guest   │ ───────────────▶ │  Write ~/.aws creds │ ──────────▶ │  Session Active  │
+  │ session  │                  │  + STS validation   │             │  (user, account) │
+  └──────────┘                  └─────────────────────┘             └──────────────────┘
+       ▲                                  │ invalid                          │ logout
+       │                                  ▼                                  │ (type LOGOUT)
+       │                       restore previous creds                       │
+       └──────────────────────────────────────────────────────────────────┘
+```
+
+| Step | Behavior |
+|------|----------|
+| Active session check | Login is blocked if a session is already active; the user must log out first. |
+| Credential entry | Prompts for Access Key ID and a hidden Secret Access Key. |
+| Empty input validation | Rejects empty access key or secret key before contacting AWS. |
+| Credential backup | Backs up any existing `~/.aws/credentials` before writing new ones. |
+| STS identity verification | Validates credentials with `aws sts get-caller-identity`. |
+| Invalid credential handling | Restores the previous session (or clears credentials) when validation fails. |
+| Session persistence | Resolves and stores the current user and account ID for the active session. |
+| Session detection | Distinguishes root, IAM users, and the unauthenticated `Guest` state. |
+| Logout confirmation | Requires typing `LOGOUT` to confirm; removes credentials while preserving region config. |
+
+---
+
+## Supported AWS Services
+
+| Service | Scope |
+|---------|-------|
+| EC2 | Instance lifecycle, instance details, SSH access, and key pair management. |
+| S3 | Bucket lifecycle and object upload, download, listing, and deletion. |
+| IAM | Users, access keys, groups, group membership, and managed policy attachment. |
+| VPC | VPCs, subnets, internet gateways, and route tables. |
+
+---
+
+## Feature Matrix
+
+### EC2
+
+| Category | Operations |
+|----------|-----------|
+| Instances | Create, List, Details, Start, Stop, Reboot, Terminate |
+| Access | SSH Into Instance |
+| Key Pairs | Create Key Pair, List Key Pairs |
+
+Instance creation is guided: it supports `t2.micro` and `t3.micro` types, resolves the latest AMI for the chosen distribution at launch time (Amazon Linux 2023, Ubuntu 24.04 LTS, Ubuntu 22.04 LTS, Debian 12), uses the account's default VPC, and creates or reuses a security group named `ec2-manager-sg`.
+
+### S3
+
+| Category | Operations |
+|----------|-----------|
+| Buckets | Create Bucket, List Buckets, Delete Bucket |
+| Objects | Upload Objects, Download Objects, List Objects, Delete Objects |
+
+### IAM
+
+| Category | Operations |
+|----------|-----------|
+| Users | Create User, List Users, Delete User |
+| Access Keys | Create, List, Delete |
+| Groups | Create, List, Delete |
+| Membership | Add User to Group, Remove User from Group |
+| Policies | Attach Policy, List Attached Policies, Detach Policy |
+
+### VPC
+
+| Category | Operations |
+|----------|-----------|
+| VPC | Create, List, Delete |
+| Subnets | Create, List, Delete |
+| Internet Gateway | Create, List, Attach, Detach, Delete |
+| Route Tables | Create, List, Associate, Disassociate, Add Internet Route, Delete |
+
+---
+
+## Example CLI Screens
+
+### EC2 menu
+
+```
+==============================
+          EC2 MENU
+==============================
+
 1. Create Instance
 2. List Instances
 3. Instance Details
@@ -243,162 +307,166 @@ EC2 MANAGEMENT
 6. Reboot Instance
 7. Terminate Instance
 
+------------------------------------------
 KEY PAIRS
 ------------------------------------------
 8. Create Key Pair
 9. List Key Pairs
 
+------------------------------------------
 SETTINGS
 ------------------------------------------
-10. Change Region
-11. SSH Into Instance
+10. SSH Into Instance
 
 0. Exit
 ```
 
-### Example: create your first instance
+### IAM menu
 
-1. Select **8** to create a key pair (e.g. `my-key`). It is saved locally as
-   `my-key.pem` with `400` permissions.
-2. Select **1** to create an instance:
-   - Enter an instance name.
-   - Choose an instance type (`t2.micro` / `t3.micro`).
-   - Choose the key pair you just created.
-   - Choose a distribution (Amazon Linux 2023, Ubuntu 24.04/22.04, Debian 12).
-   - Review the summary and confirm to launch.
-3. Select **2** to list instances and copy the new instance ID.
-4. Select **11** to SSH in — provide the SSH user and the path to your `.pem`
-   file.
+```
+==============================
+          IAM MENU
+==============================
 
-### Example: stop or terminate an instance
+-----USERS-------
+1. Create User
+2. List User
+3. Delete User
 
-- Select **5** (Stop) and enter the instance ID to stop a running instance.
-- Select **7** (Terminate), enter the instance ID, and type `DELETE` to confirm
-  permanent deletion.
+----ACCESS KEY----
+4. Create Access Key
+5. List  Access Key
+6. Delete Access Key
 
-> Each menu action is a thin wrapper around an `aws ec2 ...` command. If you
-> prefer, you can read the corresponding script to see exactly what is run.
+----IAM_GROUPS----
+7. Create Group
+8. List Group
+9. Delete Group
+
+----MEMBERSHIP----
+10. Add User to Group
+11. Remove User from Group
+
+----POLICIES----
+12. Attach Policies
+13. List Attached Policies
+14. Detach Policies
+0. Back
+```
+
+### VPC menu
+
+```
+==============================
+          VPC MENU
+==============================
+
+--------VPCS--------
+1. Create VPC
+2. List VPCs
+3. Delete VPC
+
+------SUBNETS-------
+4. Create Subnet
+5. List Subnets
+6. Delete Subnet
+
+---INTERNET GATEWAY---
+7. Create Internet Gateway
+8. List Internet Gateways
+9. Attach Internet Gateway
+10. Detach Internet Gateway
+11. Delete Internet Gateway
+
+----ROUTE TABLES----
+12. Create Route Table
+13. List Route Tables
+14. Associate Route Table
+15. Disassociate Route Table
+16. Add Route
+17. Delete Route Table
+
+0. Back
+```
 
 ---
 
-## Configuration
+## Security Considerations
 
-- **Default region** — defined in `EC2/config.sh` as `AWS_REGION`
-  (defaults to `ap-south-1`). You can change the active region at runtime from
-  the menu (**option 10**), which also runs `aws configure set region`.
-- **Credentials** — managed by the AWS CLI itself (`aws configure`). This tool
-  does not store credentials; it relies on your standard AWS CLI configuration.
-- **Security group** — instance creation uses a security group named
-  `ec2-manager-sg`, created automatically in the default VPC if it does not
-  already exist.
+Review this section before running the tool against any account you care about.
 
----
+- **Principle of least privilege.** Use IAM credentials scoped to only the services and actions you intend to manage. Avoid using root credentials. Create a dedicated IAM user or role for the tool and grant the minimum permissions required for EC2, S3, IAM, and VPC operations you plan to perform.
+- **IAM permissions.** Operations fail cleanly when permissions are missing, but the tool does not grant or audit permissions for you. Confirm that the active identity is authorized for the actions you select, especially IAM operations that can modify access.
+- **AWS credentials.** Credentials are managed through the standard AWS CLI configuration (`~/.aws/credentials`). The login workflow backs up existing credentials before writing new ones and validates them with STS. `.env` and `.aws/` are listed in `.gitignore` — never commit credentials.
+- **SSH key handling.** Creating a key pair writes a `.pem` file to the working directory with `400` permissions. Anyone with that file can access the corresponding instances. `*.pem` and `*.key` are gitignored; store private keys securely and never commit them.
+- **Open SSH ingress.** EC2 instance creation uses a security group (`ec2-manager-sg`) that allows inbound TCP port 22 from `0.0.0.0/0`. This is convenient for getting started but is not appropriate for production. Restrict the ingress CIDR to trusted ranges for real use.
+- **Destructive operations.** Actions such as terminating instances, deleting buckets, deleting IAM resources, and deleting VPC components permanently affect real resources. Destructive actions require explicit confirmation, but you remain responsible for their consequences.
+- **Billing responsibility.** Every resource created through this tool may incur charges according to AWS pricing. Monitor and clean up resources you no longer need.
 
-## Screenshots
-
-<!-- Add screenshots or terminal recordings here as the project matures. -->
-
-| View | Preview |
-|------|---------|
-| Main menu |<img width="582" height="604" alt="Screenshot 2026-06-21 201959" src="https://github.com/user-attachments/assets/62e9978a-d152-4f35-a36b-6f85ac4b29ab" />|
-| Create instance flow | <img width="651" height="716" alt="Screenshot 2026-06-21 202328" src="https://github.com/user-attachments/assets/98be38ea-f379-4001-a523-a73e109766f6" />|
-| Instance list / details | <img width="572" height="621" alt="Screenshot 2026-06-21 202053" src="https://github.com/user-attachments/assets/207a2e8a-4ce5-4a11-a065-0b5b2212c13d" />|
-
+If you discover a security issue, please open an issue without including sensitive details, or contact the maintainer privately.
 
 ---
 
-## Roadmap
+## Project Roadmap
 
-The roadmap is organized so that each new AWS service is added as an independent
-module under its own directory, following the existing structure.
+The roadmap is organized so that each new capability is added as an independent module or a self-contained enhancement, consistent with the existing architecture. Items are aspirational and may change.
 
-### v0.2 — S3 module
-- Bucket management
-- File upload / download
+### Additional AWS services
 
-### v0.3 — IAM module
-- User management
-- Policy management
+| Service | Planned scope |
+|---------|---------------|
+| Security Groups | Standalone rule management and reuse. |
+| Elastic IPs | Allocation, association, and release. |
+| EBS | Volume creation, attachment, snapshots. |
+| Auto Scaling | Launch templates and scaling groups. |
+| Load Balancers | ALB/NLB target groups and listeners. |
+| CloudWatch | Metrics, alarms, and log groups. |
+| Lambda | Function deployment and invocation. |
+| RDS | Database instance lifecycle. |
+| CloudFormation | Stack management. |
 
-### v0.4 — VPC module
-- VPC management
-- Subnet management
-- Security group management
+### Tooling and platform
 
-### v1.0 — Unified AWS Manager
-- Multi-service menu system
-- Cross-service workflows
-
-> Roadmap items are aspirational and may change. Only features listed under
-> [Features](#features) are currently implemented.
+- Non-interactive CLI mode for scripting and automation.
+- Resource search across services.
+- Structured logging and a debug mode.
+- Export results to JSON and CSV.
+- Performance optimizations for listing and lookups.
+- A plugin architecture for third-party service modules.
 
 ---
 
 ## Contributing
 
-Contributions are welcome. Because the project is organized by service module,
-contributions tend to fall into two categories: improving an existing module, or
-adding a new one.
+Contributions are welcome. Most changes fall into two categories: improving an existing module, or adding a new service module.
 
-### Guidelines
+### Coding style
 
-1. **Fork and branch** — create a feature branch for your change.
-2. **Follow the module layout** — keep one concern per file and source feature
-   scripts from `main.sh`. New services go in their own top-level directory with
-   their own `main.sh` and `menu.sh`.
-3. **Match the existing style** — POSIX-friendly Bash, clear `[OK]` / `[INFO]` /
-   `[ERROR]` status messages, and confirmation prompts for destructive actions.
-4. **Keep wrappers transparent** — each menu action should map to a clear,
-   inspectable `aws` command.
-5. **Test against a real AWS account** in a non-production region before opening
-   a pull request, and note what you tested.
-6. **Do not commit secrets** — see the [Security](#security) section. Private
-   keys, `.env` files, and local AWS config are gitignored and must stay that
-   way.
+- Write portable Bash with `#!/bin/bash` and clear `[OK]` / `[INFO]` / `[ERROR]` status messages.
+- Keep each menu action a thin, inspectable wrapper around a single `aws` command.
+- Validate inputs and require confirmation before any destructive action.
+- Match the formatting, naming, and prompt conventions of the surrounding code.
 
-### Opening a pull request
+### Module structure
 
-- Describe the change and the module it affects.
-- Include the commands you ran to verify it.
-- Keep pull requests focused and reasonably small.
+- Place each service in its own top-level directory.
+- Split operations into small, single-responsibility scripts (CRUD, helpers, validation).
+- Add the module's submenu to `menu.sh` and source its scripts from `main.sh`.
+- Integrate with the `Core` session layer so operations run within an authenticated session.
 
----
+### Testing expectations
 
-## Security
+- Ensure scripts pass `bash -n` (syntax check) and ShellCheck; the CI workflow runs both.
+- Test changes against a real AWS account in a non-production region before opening a pull request, and note what you tested.
+- Do not commit secrets. Private keys, `.env` files, and local AWS config must remain gitignored.
 
-Please read this section before using the tool against any account you care
-about.
+### Issues and pull requests
 
-- **SSH is open to the world.** When creating an instance, the tool creates (or
-  reuses) a security group named `ec2-manager-sg` that allows inbound TCP port
-  22 from `0.0.0.0/0`. This is convenient for getting started but is **not**
-  appropriate for production. Restrict the ingress CIDR to trusted IP ranges for
-  any real use.
-- **Private keys are written to disk.** Creating a key pair saves a `.pem` file
-  in the current directory with `chmod 400`. Keep these files safe; anyone with
-  the `.pem` can access the corresponding instances. `*.pem` and `*.key` are
-  listed in `.gitignore` — never commit them.
-- **Credentials are handled by the AWS CLI.** This tool does not store or
-  transmit your credentials; it relies on your local AWS CLI configuration.
-  `.env` and `.aws/` are gitignored.
-- **Actions cost money and can be destructive.** Creating, running, and
-  terminating instances affects real AWS resources and billing. Destructive
-  actions (terminate, reboot) require explicit confirmation, but you remain
-  responsible for what you launch.
-- **Review before you run.** Every action is a wrapper around an `aws` command.
-  If in doubt, read the relevant script first.
-
-If you discover a security issue, please open an issue (or contact the
-maintainers privately if the project later defines a disclosure process) rather
-than including sensitive details in a public report.
+- **Issues** — describe the problem or proposal, the affected module, your environment (OS, AWS CLI version), and steps to reproduce where applicable.
+- **Pull requests** — keep them focused and reasonably small, describe the change and the module it affects, and include the commands you ran to verify it.
 
 ---
 
 ## License
 
-License: **TBD**.
-
-<!--
-Choose and add a license (e.g. MIT, Apache-2.0) and a LICENSE file, then
-update this section and the License badge above accordingly.
--->
+This project is licensed under the [MIT License](LICENSE).

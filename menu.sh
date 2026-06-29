@@ -257,7 +257,9 @@ do
     echo "12. Create Route Table"
     echo "13. List Route Tables"
     echo "14. Associate Route Table"
-    echo "15. Delete Route Table"
+    echo "15. Disassociate Route Table"
+    echo "16. Add Route"
+    echo "17. Delete Route Table"
     echo ""
 
     echo "0. Back"
@@ -288,7 +290,9 @@ do
         12) create_route_table ;;
         13) list_route_tables ;;
         14) associate_route_table ;;
-        15) delete_route_table ;;
+        15) disassociate_route_table ;;
+        16) add_route ;;
+        17) delete_route_table ;;
 
         0) break ;;
 
