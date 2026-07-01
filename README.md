@@ -12,7 +12,7 @@ A modular, interactive Bash console for managing AWS infrastructure on top of th
 
 ---
 
-## Table of Contents
+##  Table of Contents
 
 - [Overview](#overview)
 - [Features](#features)
